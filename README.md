@@ -4,12 +4,19 @@ This project was bootstrapped with [Create React App](https://github.com/faceboo
 
 ## Setup
 
+```
 git clone git@github.com:goban/docket-interview.git
+
 cd docket-interview
+
 nvm install
+
 npm install
+
 npm test
+
 npm start
+```
 
 ## Available Scripts
 
