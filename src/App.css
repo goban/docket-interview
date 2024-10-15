@@ -1,0 +1,117 @@
+/* App Container */
+.app-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  font-family: 'Arial', sans-serif;
+  background-image: url('../public/dumpster.png');
+  background-size: cover;
+  background-position: center;
+  min-height: 100vh;
+  padding: 20px;
+  box-sizing: border-box;
+}
+
+/* Title */
+.title {
+  font-size: 36px;
+  font-weight: bold;
+  color: #ffffff;
+  text-align: center;
+  margin-bottom: 20px;
+  text-shadow: 2px 2px #000000;
+  font-family: 'Impact', 'Haettenschweiler', 'Arial Narrow Bold', sans-serif;
+}
+
+/* Controls section */
+.controls {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 20px;
+  padding: 15px;
+  background-color: rgba(0, 0, 0, 0.7);
+  border-radius: 8px;
+  width: 90%;
+  max-width: 600px;
+}
+
+/* Sliders Section */
+.slider-section {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+}
+
+.slider-group {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.slider-group label {
+  flex: 1;
+  color: #ffffff;
+}
+
+.slider-group input[type='range'] {
+  flex: 2;
+  margin-left: 10px;
+}
+
+/* Buttons Section */
+.button-group {
+  display: flex;
+  justify-content: center;
+  gap: 15px;
+  margin-top: 15px;
+}
+
+button {
+  padding: 10px 15px;
+  cursor: pointer;
+  font-size: 16px;
+  background-color: #ffffff;
+  border: none;
+  border-radius: 5px;
+}
+
+button:hover {
+  background-color: #dddddd;
+}
+
+button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Game Board */
+.board {
+  display: grid;
+  gap: 0;
+  padding: 10px;
+  background-color: #333333;
+  border-radius: 8px;
+}
+
+.cell {
+  width: 25px;
+  height: 25px;
+  background-color: #ffffff;
+  border: 1px solid #cccccc;
+  box-sizing: border-box;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 18px;
+}
+
+.cell:hover {
+  cursor: pointer;
+  background-color: #f0f0f0;
+}
+
+.alive {
+  background-color: #ffffff;
+}
