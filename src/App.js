@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useCallback } from 'react'
-import * as fs from 'fs'
 import './App.css' // External CSS for styling
 
 const DEFAULT_SPEED = 500
@@ -32,9 +31,9 @@ const randomPopulateGrid = (rows, cols) =>
   )
 
 const BACKGROUND_IMAGES = [
-  'https://www.atlasandboots.com/wp-content/uploads/2019/05/ama-dablam2-most-beautiful-mountains-in-the-world.jpg',
-  'https://worldwildschooling.com/wp-content/uploads/2024/03/Must-Visit-American-Landscapes-for-Stunning-Photography-Denali-National-Park-Alaska_%C2%A9-evenfh_Adobe-Stock-Photo_231359324-1536x864.jpg',
-  'https://worldwildschooling.com/wp-content/uploads/2024/05/Mountains-in-the-US_Grand-Teton-Wyoming_Kennytong_Adobe-Stock-Photo_67602283.webp',
+  'https://t3.ftcdn.net/jpg/08/95/60/58/240_F_895605832_9DKMp9WdTprPSxCEvDn4p69hByYXnZBk.jpg',
+  'https://as1.ftcdn.net/v2/jpg/07/45/14/78/1000_F_745147868_ZDDQOsRgip9lgNYFasL9Od3NVQZiqyiD.jpg',
+  'https://upload.wikimedia.org/wikipedia/commons/thumb/e/e7/Everest_North_Face_toward_Base_Camp_Tibet_Luca_Galuzzi_2006.jpg/1280px-Everest_North_Face_toward_Base_Camp_Tibet_Luca_Galuzzi_2006.jpg'
 ]
 
 function App() {
@@ -44,11 +43,9 @@ function App() {
   const [running, setRunning] = useState(false)
   const [speed, setSpeed] = useState(DEFAULT_SPEED)
 
-  // const [imageSourceUrl, setImageSourceUrl] = useState("")
   const [backgroundIndex, setBackgroundIndex] = useState(0)
-  // const [background, setBackground] = useState(null)
   const [backgroundMessage, setBackgroundMessage] = useState('')
-  const [backgroundFetching, setBackgroundFetching] = useState(false)
+  const [backgroundImage, setBackgroundImage] = useState(null)
 
   // Function to simulate one step of the Game of Life
   const simulateStep = useCallback(
@@ -86,44 +83,27 @@ function App() {
 
   // Asynchronous function to handle the simulation loop
   useEffect(() => {
-
     let isActive = true
 
     const runSimulation = async () => {
-      if (backgroundFetching) {
-        setBackgroundMessage('Fetching image...')
-        try {
-          const fetchResult = await fetch(BACKGROUND_IMAGES[backgroundIndex])
-          if (!fetchResult.ok) {
-            throw new Error('Failed to fetch image')
-          }
-          const blob = fetchResult.blob()
-          var buffer = await blob.arrayBuffer()
-          buffer = Buffer.from(buffer)
-          fs.createWriteStream('../public/dumpster.png').write(buffer)
-          setBackgroundMessage('Image fetched successfully')
-        } catch (error) {
-          setBackgroundMessage(`${error}`)
-        } finally {
-          setBackgroundFetching(false)
-          setBackgroundIndex(backgroundIndex === BACKGROUND_IMAGES.length - 1 ? 0 : backgroundIndex + 1)
-        }
-      }
-
       if (!isActive || !running) return
 
       setGrid((g) => simulateStep(g))
       await new Promise((resolve) => setTimeout(resolve, speed))
-      runSimulation()
+
+      if (running) {
+        runSimulation()
+      }
     }
 
     if (running) {
       runSimulation()
     }
+
     return () => {
       isActive = false
     }
-  }, [backgroundFetching, setBackgroundFetching, setBackgroundMessage, running, speed, simulateStep, backgroundIndex, setBackgroundIndex])
+  }, [running, speed, simulateStep])
 
   // Reset the grid and stop the simulation
   const handleReset = () => {
@@ -141,13 +121,61 @@ function App() {
     setGrid(randomPopulateGrid(numRows, numCols))
   }
 
-  // Populate the grid with random cells
-  const activateDownload = () => {
-    setBackgroundFetching(true)
+  // Set the background image when the component mounts
+  useEffect(() => {
+    const setInitialBackground = async () => {
+      setBackgroundMessage('Fetching initial background image...')
+      try {
+        const response = await fetch(BACKGROUND_IMAGES[backgroundIndex])
+        if (!response.ok) {
+          throw new Error(`Failed to fetch image: ${response.statusText}`)
+        }
+        const blob = await response.blob()
+        const reader = new FileReader()
+        reader.onloadend = () => {
+          setBackgroundImage(reader.result)
+          setBackgroundMessage('Background image set')
+        }
+        reader.readAsDataURL(blob)
+      } catch (error) {
+        setBackgroundMessage(`Error fetching image: ${error.message}`)
+      }
+    }
+
+    setInitialBackground()
+  }, [backgroundIndex])
+
+  // Function to change the background image
+  const changeBackground = async () => {
+    setBackgroundMessage('Fetching new background image...')
+    let nextIndex = (backgroundIndex + 1) % BACKGROUND_IMAGES.length
+    try {
+      const response = await fetch(BACKGROUND_IMAGES[nextIndex])
+      if (!response.ok) {
+        throw new Error(`Failed to fetch image: ${response.statusText}`)
+      }
+      const blob = await response.blob()
+      const reader = new FileReader()
+      reader.onloadend = () => {
+        setBackgroundImage(reader.result)
+        setBackgroundMessage('Background image updated')
+      }
+      reader.readAsDataURL(blob)
+    } catch (error) {
+      setBackgroundMessage(`Error fetching image: ${error.message}`)
+    } finally {
+      setBackgroundIndex(nextIndex)
+    }
   }
 
   return (
-    <div className="app-container">
+    <div
+      className="app-container"
+      style={{
+        backgroundImage: backgroundImage ? `url(${backgroundImage})` : 'none',
+        backgroundSize: 'cover',
+      }}
+    >
       <h1 className="title">
         Docketing Waste as Part of the<br />
         Cycle of Life Core Service
@@ -214,7 +242,7 @@ function App() {
           <button onClick={handleRandomPopulate} disabled={running}>
             Random
           </button>
-          <button onClick={activateDownload} disabled={backgroundFetching}>
+          <button onClick={changeBackground}>
             Change Background
           </button>
         </div>
