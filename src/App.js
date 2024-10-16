@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react'
+import * as fs from 'fs'
 import './App.css' // External CSS for styling
 
 const DEFAULT_SPEED = 500
@@ -30,12 +31,24 @@ const randomPopulateGrid = (rows, cols) =>
     Array.from({ length: cols }, () => (Math.random() > DEAD_FREQUENCY ? 1 : 0))
   )
 
+const BACKGROUND_IMAGES = [
+  'https://www.atlasandboots.com/wp-content/uploads/2019/05/ama-dablam2-most-beautiful-mountains-in-the-world.jpg',
+  'https://worldwildschooling.com/wp-content/uploads/2024/03/Must-Visit-American-Landscapes-for-Stunning-Photography-Denali-National-Park-Alaska_%C2%A9-evenfh_Adobe-Stock-Photo_231359324-1536x864.jpg',
+  'https://worldwildschooling.com/wp-content/uploads/2024/05/Mountains-in-the-US_Grand-Teton-Wyoming_Kennytong_Adobe-Stock-Photo_67602283.webp',
+]
+
 function App() {
   const [numRows, setNumRows] = useState(DEFAULT_SIZE)
   const [numCols, setNumCols] = useState(DEFAULT_SIZE)
   const [grid, setGrid] = useState(() => generateEmptyGrid(DEFAULT_SIZE, DEFAULT_SIZE))
   const [running, setRunning] = useState(false)
   const [speed, setSpeed] = useState(DEFAULT_SPEED)
+
+  // const [imageSourceUrl, setImageSourceUrl] = useState("")
+  const [backgroundIndex, setBackgroundIndex] = useState(0)
+  // const [background, setBackground] = useState(null)
+  const [backgroundMessage, setBackgroundMessage] = useState('')
+  const [backgroundFetching, setBackgroundFetching] = useState(false)
 
   // Function to simulate one step of the Game of Life
   const simulateStep = useCallback(
@@ -73,9 +86,30 @@ function App() {
 
   // Asynchronous function to handle the simulation loop
   useEffect(() => {
+
     let isActive = true
 
     const runSimulation = async () => {
+      if (backgroundFetching) {
+        setBackgroundMessage('Fetching image...')
+        try {
+          const fetchResult = await fetch(BACKGROUND_IMAGES[backgroundIndex])
+          if (!fetchResult.ok) {
+            throw new Error('Failed to fetch image')
+          }
+          const blob = fetchResult.blob()
+          var buffer = await blob.arrayBuffer()
+          buffer = Buffer.from(buffer)
+          fs.createWriteStream('../public/dumpster.png').write(buffer)
+          setBackgroundMessage('Image fetched successfully')
+        } catch (error) {
+          setBackgroundMessage(`${error}`)
+        } finally {
+          setBackgroundFetching(false)
+          setBackgroundIndex(backgroundIndex === BACKGROUND_IMAGES.length - 1 ? 0 : backgroundIndex + 1)
+        }
+      }
+
       if (!isActive || !running) return
 
       setGrid((g) => simulateStep(g))
@@ -86,11 +120,10 @@ function App() {
     if (running) {
       runSimulation()
     }
-
     return () => {
       isActive = false
     }
-  }, [running, speed, simulateStep])
+  }, [backgroundFetching, setBackgroundFetching, setBackgroundMessage, running, speed, simulateStep, backgroundIndex, setBackgroundIndex])
 
   // Reset the grid and stop the simulation
   const handleReset = () => {
@@ -108,12 +141,21 @@ function App() {
     setGrid(randomPopulateGrid(numRows, numCols))
   }
 
+  // Populate the grid with random cells
+  const activateDownload = () => {
+    setBackgroundFetching(true)
+  }
+
   return (
     <div className="app-container">
       <h1 className="title">
         Docketing Waste as Part of the<br />
         Cycle of Life Core Service
       </h1>
+
+      <p>
+        Message: {backgroundMessage}
+      </p>
 
       <div className="controls">
         {/* Sliders Section */}
@@ -171,6 +213,9 @@ function App() {
           </button>
           <button onClick={handleRandomPopulate} disabled={running}>
             Random
+          </button>
+          <button onClick={activateDownload} disabled={backgroundFetching}>
+            Change Background
           </button>
         </div>
       </div>
